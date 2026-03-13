@@ -1,0 +1,9 @@
+#!/bin/tcsh
+#ALU_HW1_pre_sim.sh
+#/MasterClass/M133040086_ALU/HW1/RTL/FLP_adder_7/FLP_adder_7.v \
+#/MasterClass/M133040086_ALU/HW1/RTL/FLP_adder/FLP_adder.v \
+vcs -R -debug_access+all \
+/MasterClass/M133040086_ALU/HW1/pre_sim/ALU_HW1_testbench.v \
+/MasterClass/M133040086_ALU/HW1/RTL/FLP_Multiplier/FLP_Multiplier.v \
++full64 \
++access+r +vcs+fsdbon +fsdb+mda +fsdbfile+FLP_Multiplier.fsdb +v2k

@@ -1,6 +1,5 @@
-# HW5: Truncated Multiplier Designs (Bonus)
+# HW5: Truncated Multiplier Designs 
 
-## 作業要求
 
 設計5種無符號截斷乘法器，支援8x8和16x16兩種精度：
 1. **operator** - Verilog * 運算子

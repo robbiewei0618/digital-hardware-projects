@@ -11,7 +11,7 @@ Round-to-nearest-even with IEEE-754 subnormal inputs **and results**, Inf/NaN
 rules (Inf·0, Inf − Inf), canonical qNaN, signed zeros.
 
 The original FP designs are in `rtl/archive/` (`FLP_FMA_v1.v`,
-`FLP_FMA_4_v1.v`, plus two earlier iterations); their chat-style design notes,
+`FLP_FMA_4_v1.v`, plus three earlier iterations); their chat-style design notes,
 which had been pasted after `endmodule`, are in `docs/`.
 
 ## Verification

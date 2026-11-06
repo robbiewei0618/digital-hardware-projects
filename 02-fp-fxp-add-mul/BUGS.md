@@ -12,6 +12,7 @@ to this entry. Error counts are from the default regression
 | 2 | `FLP_Multiplier`, `FLP_Multiplier_4` | scoreboard (all-ones mantissa operands) | 20 / 200 493 results 1 ULP low; course TB 100 / 100 |
 | 3 | `FXP_mul` | scoreboard + `cp_sat` coverage | saturation never happened: 100 182 / 200 494 overflowing products wrapped around |
 | 4 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard (directed `x + x`) | every sum that carries out (≥ 2× the larger operand's leading bit) flushed to 0: `1.0 + 1.0 = 0`; 6 728 / 200 493 per adder; course TB 100 / 100 |
+| 5 | `FLP_adder_4`, `FLP_adder_7` | scoreboard (back-to-back Inf operands) | Inf results took the sign of the operand *currently at the input*, not of the one in flight: 3 959 / 200 491 wrong |
 
 ---
 
@@ -117,3 +118,29 @@ in the multiplier is the same mistake.)
 patterns; a carry-out needs equal signs *and* nearly equal exponents, which
 none of them had. The directed corner matrix here contains `x + x` for
 every corner value, so the bug showed up in the first 200 vectors.
+
+## 5. Pipelined adders: Inf sign read from the wrong pipeline stage
+
+**Symptom.** `+Inf + 1e-7` came out as `-Inf` in `FLP_adder_4` and
+`FLP_adder_7` (never in the combinational `FLP_adder`), and only when the
+*next* vector had a different sign.
+
+**Root cause.** The last stage builds the Inf / NaN result from the
+registered `is_inf` / `is_nan` flags, but takes the signs straight from the
+module inputs:
+
+```verilog
+wire inf_sign = r1_a_inf ? a[31] : b[31];                 // a, b are already the next vector
+... (r1_a_inf & r1_b_inf & (a[31] ^ b[31])) ? res_nan ...  // same for Inf - Inf
+```
+
+When the combinational adder was cut into stages, the flags were
+registered but these two sign bits were not. In `FLP_adder_7` the signs
+were 6 stages stale.
+
+**Fix.** Carry `sign_a` / `sign_b` through the pipeline next to the flags.
+
+**Why the course testbench missed it.** It has no Inf operands, and it
+holds each input for a full cycle per vector, so even a stale read would
+often see the same value. A stream that changes every cycle plus
+special-value operands is what exposes stage-alignment mistakes.

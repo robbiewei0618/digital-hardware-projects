@@ -83,15 +83,18 @@ module FLP_adder_4 (
 
   // ----------------- r1 暫存（第一拍） -----------------
   reg        r1_a_zero, r1_b_zero, r1_a_inf, r1_b_inf, r1_a_nan, r1_b_nan;
+  reg        r1_sign_a, r1_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r1_exp_big_s;
   reg signed [27:0] r1_mant_big_s, r1_mant_sml_al;
   reg               r1_sticky_align;
   always @(posedge clk) begin
     if (rst) begin
       r1_a_zero<=0; r1_b_zero<=0; r1_a_inf<=0; r1_b_inf<=0; r1_a_nan<=0; r1_b_nan<=0;
+      r1_sign_a<=0; r1_sign_b<=0;
       r1_exp_big_s<=0; r1_mant_big_s<=0; r1_mant_sml_al<=0; r1_sticky_align<=0;
     end else begin
       r1_a_zero<=a_is_zero; r1_b_zero<=b_is_zero; r1_a_inf<=a_is_inf; r1_b_inf<=b_is_inf; r1_a_nan<=a_is_nan; r1_b_nan<=b_is_nan;
+      r1_sign_a<=sign_a; r1_sign_b<=sign_b;
       r1_exp_big_s<=exp_big_s; r1_mant_big_s<=mant_big_s; r1_mant_sml_al<=mant_sml_al; r1_sticky_align<=sticky_align;
     end
   end
@@ -146,7 +149,7 @@ module FLP_adder_4 (
   wire [7:0]  exp_biased = exp_bias_s11[7:0];
   wire [23:0] mant24     = mant_final[25:2];
 
-  wire inf_sign = r1_a_inf ? a[31] : b[31];
+  wire inf_sign = r1_a_inf ? r1_sign_a : r1_sign_b;
   wire both_zero = r1_a_zero & r1_b_zero;
 
   wire [31:0] res_normal    = { s2_sign, exp_biased, mant24[22:0] };
@@ -157,7 +160,7 @@ module FLP_adder_4 (
   wire [31:0] res_nan       = { 1'b0, 8'hFF, 23'h400000 };
 
   wire [31:0] res_comb =
-      (r1_a_nan | r1_b_nan | (r1_a_inf & r1_b_inf & (a[31]^b[31]))) ? res_nan :
+      (r1_a_nan | r1_b_nan | (r1_a_inf & r1_b_inf & (r1_sign_a ^ r1_sign_b))) ? res_nan :
       (r1_a_inf | r1_b_inf)  ? res_inf :
       (both_zero | (s2_abs==28'd0)) ? res_zero :
       exp_overflow  ? res_overflow :

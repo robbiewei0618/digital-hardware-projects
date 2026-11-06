@@ -45,16 +45,19 @@ module FLP_adder_7 (
   wire signed [27:0] s0_mant_b_s = s0_sign_b ? -$signed(s0_mant_b_u) : $signed(s0_mant_b_u);
 
   reg        r1_a_is_zero, r1_b_is_zero, r1_a_is_inf, r1_b_is_inf, r1_a_is_nan, r1_b_is_nan;
+  reg        r1_sign_a, r1_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r1_exp_a_s, r1_exp_b_s;
   reg signed [27:0] r1_mant_a_s, r1_mant_b_s;
   always @(posedge clk) begin
     if (rst) begin
       r1_a_is_zero<=0; r1_b_is_zero<=0; r1_a_is_inf<=0; r1_b_is_inf<=0; r1_a_is_nan<=0; r1_b_is_nan<=0;
+      r1_sign_a<=0; r1_sign_b<=0;
       r1_exp_a_s<=0; r1_exp_b_s<=0; r1_mant_a_s<=0; r1_mant_b_s<=0;
     end else begin
       r1_a_is_zero<=s0_a_is_zero; r1_b_is_zero<=s0_b_is_zero;
       r1_a_is_inf <=s0_a_is_inf ; r1_b_is_inf <=s0_b_is_inf ;
       r1_a_is_nan <=s0_a_is_nan ; r1_b_is_nan <=s0_b_is_nan ;
+      r1_sign_a<=s0_sign_a; r1_sign_b<=s0_sign_b;
       r1_exp_a_s  <=s0_exp_a_s;   r1_exp_b_s  <=s0_exp_b_s;
       r1_mant_a_s <=s0_mant_a_s;  r1_mant_b_s <=s0_mant_b_s;
     end
@@ -68,16 +71,19 @@ module FLP_adder_7 (
   wire signed [27:0] s1_mant_small  = swap1 ? r1_mant_a_s: r1_mant_b_s;
 
   reg        r2_a_is_zero, r2_b_is_zero, r2_a_is_inf, r2_b_is_inf, r2_a_is_nan, r2_b_is_nan;
+  reg        r2_sign_a, r2_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r2_exp_big_s, r2_exp_small_s;
   reg signed [27:0] r2_mant_big, r2_mant_small;
   always @(posedge clk) begin
     if (rst) begin
       r2_a_is_zero<=0; r2_b_is_zero<=0; r2_a_is_inf<=0; r2_b_is_inf<=0; r2_a_is_nan<=0; r2_b_is_nan<=0;
+      r2_sign_a<=0; r2_sign_b<=0;
       r2_exp_big_s<=0; r2_exp_small_s<=0; r2_mant_big<=0; r2_mant_small<=0;
     end else begin
       r2_a_is_zero<=r1_a_is_zero; r2_b_is_zero<=r1_b_is_zero;
       r2_a_is_inf <=r1_a_is_inf ; r2_b_is_inf <=r1_b_is_inf ;
       r2_a_is_nan <=r1_a_is_nan ; r2_b_is_nan <=r1_b_is_nan ;
+      r2_sign_a<=r1_sign_a; r2_sign_b<=r1_sign_b;
       r2_exp_big_s<=s1_exp_big_s; r2_exp_small_s<=s1_exp_small_s;
       r2_mant_big <=s1_mant_big;  r2_mant_small  <=s1_mant_small;
     end
@@ -108,17 +114,20 @@ module FLP_adder_7 (
       |(s2_small_mag & low_mask28(s2_de[4:0]));
 
   reg        r3_a_is_zero, r3_b_is_zero, r3_a_is_inf, r3_b_is_inf, r3_a_is_nan, r3_b_is_nan;
+  reg        r3_sign_a, r3_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r3_exp_big_s;
   reg signed [27:0] r3_mant_big, r3_mant_small_al;
   reg               r3_sticky_align;
   always @(posedge clk) begin
     if (rst) begin
       r3_a_is_zero<=0; r3_b_is_zero<=0; r3_a_is_inf<=0; r3_b_is_inf<=0; r3_a_is_nan<=0; r3_b_is_nan<=0;
+      r3_sign_a<=0; r3_sign_b<=0;
       r3_exp_big_s<=0; r3_mant_big<=0; r3_mant_small_al<=0; r3_sticky_align<=0;
     end else begin
       r3_a_is_zero<=r2_a_is_zero; r3_b_is_zero<=r2_b_is_zero;
       r3_a_is_inf <=r2_a_is_inf ; r3_b_is_inf <=r2_b_is_inf ;
       r3_a_is_nan <=r2_a_is_nan ; r3_b_is_nan <=r2_b_is_nan ;
+      r3_sign_a<=r2_sign_a; r3_sign_b<=r2_sign_b;
       r3_exp_big_s<=r2_exp_big_s;
       r3_mant_big<=r2_mant_big; r3_mant_small_al<=s2_small_al;
       r3_sticky_align<=s2_sticky_align;
@@ -131,6 +140,7 @@ module FLP_adder_7 (
   wire [27:0]        s3_abs   = s3_sign ? (~s3_sum_s + 28'd1) : s3_sum_s;
 
   reg        r4_a_is_zero, r4_b_is_zero, r4_a_is_inf, r4_b_is_inf, r4_a_is_nan, r4_b_is_nan;
+  reg        r4_sign_a, r4_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r4_sign;
   reg [27:0] r4_abs;
   reg signed [8:0] r4_exp_big_s;
@@ -138,11 +148,13 @@ module FLP_adder_7 (
   always @(posedge clk) begin
     if (rst) begin
       r4_a_is_zero<=0; r4_b_is_zero<=0; r4_a_is_inf<=0; r4_b_is_inf<=0; r4_a_is_nan<=0; r4_b_is_nan<=0;
+      r4_sign_a<=0; r4_sign_b<=0;
       r4_sign<=0; r4_abs<=0; r4_exp_big_s<=0; r4_sticky_align<=0;
     end else begin
       r4_a_is_zero<=r3_a_is_zero; r4_b_is_zero<=r3_b_is_zero;
       r4_a_is_inf <=r3_a_is_inf ; r4_b_is_inf <=r3_b_is_inf ;
       r4_a_is_nan <=r3_a_is_nan ; r4_b_is_nan <=r3_b_is_nan ;
+      r4_sign_a<=r3_sign_a; r4_sign_b<=r3_sign_b;
       r4_sign<=s3_sign; r4_abs<=s3_abs; r4_exp_big_s<=r3_exp_big_s;
       r4_sticky_align<=r3_sticky_align;
     end
@@ -168,6 +180,7 @@ module FLP_adder_7 (
   wire s4_sticky_norm = (s4_shift == -7'sd1) ? r4_abs[0] : 1'b0;
 
   reg        r5_a_is_zero, r5_b_is_zero, r5_a_is_inf, r5_b_is_inf, r5_a_is_nan, r5_b_is_nan;
+  reg        r5_sign_a, r5_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r5_sign;
   reg [27:0] r5_norm_pre;
   reg signed [9:0] r5_exp_pre;
@@ -175,11 +188,13 @@ module FLP_adder_7 (
   always @(posedge clk) begin
     if (rst) begin
       r5_a_is_zero<=0; r5_b_is_zero<=0; r5_a_is_inf<=0; r5_b_is_inf<=0; r5_a_is_nan<=0; r5_b_is_nan<=0;
+      r5_sign_a<=0; r5_sign_b<=0;
       r5_sign<=0; r5_norm_pre<=0; r5_exp_pre<=0; r5_sticky_all<=0;
     end else begin
       r5_a_is_zero<=r4_a_is_zero; r5_b_is_zero<=r4_b_is_zero;
       r5_a_is_inf <=r4_a_is_inf ; r5_b_is_inf <=r4_b_is_inf ;
       r5_a_is_nan <=r4_a_is_nan ; r5_b_is_nan <=r4_b_is_nan ;
+      r5_sign_a<=r4_sign_a; r5_sign_b<=r4_sign_b;
       r5_sign<=r4_sign; r5_norm_pre<=s4_norm_pre; r5_exp_pre<=s4_exp_pre;
       r5_sticky_all<= r4_sticky_align | s4_sticky_norm;
     end
@@ -198,17 +213,20 @@ module FLP_adder_7 (
   wire signed [9:0] s5_exp_final_s = s5_need_renorm ? (r5_exp_pre + 10'sd1) : r5_exp_pre;
 
   reg        r6_a_is_zero, r6_b_is_zero, r6_a_is_inf, r6_b_is_inf, r6_a_is_nan, r6_b_is_nan;
+  reg        r6_sign_a, r6_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r6_sign;
   reg [27:0] r6_mant_final;
   reg signed [9:0] r6_exp_final_s;
   always @(posedge clk) begin
     if (rst) begin
       r6_a_is_zero<=0; r6_b_is_zero<=0; r6_a_is_inf<=0; r6_b_is_inf<=0; r6_a_is_nan<=0; r6_b_is_nan<=0;
+      r6_sign_a<=0; r6_sign_b<=0;
       r6_sign<=0; r6_mant_final<=0; r6_exp_final_s<=0;
     end else begin
       r6_a_is_zero<=r5_a_is_zero; r6_b_is_zero<=r5_b_is_zero;
       r6_a_is_inf <=r5_a_is_inf ; r6_b_is_inf <=r5_b_is_inf ;
       r6_a_is_nan <=r5_a_is_nan ; r6_b_is_nan <=r5_b_is_nan ;
+      r6_sign_a<=r5_sign_a; r6_sign_b<=r5_sign_b;
       r6_sign<=r5_sign; r6_mant_final<=s5_mant_final; r6_exp_final_s<=s5_exp_final_s;
     end
   end
@@ -221,7 +239,7 @@ module FLP_adder_7 (
   wire [7:0]  s6_exp_biased = s6_exp_bias_s11[7:0];
   wire [23:0] s6_mant24     = r6_mant_final[25:2];
 
-  wire s6_inf_sign = r6_a_is_inf ? a[31] : b[31];
+  wire s6_inf_sign = r6_a_is_inf ? r6_sign_a : r6_sign_b;
   wire s6_both_zero = r6_a_is_zero & r6_b_is_zero;
 
   wire [31:0] s6_res_normal    = { r6_sign, s6_exp_biased, s6_mant24[22:0] };
@@ -232,7 +250,7 @@ module FLP_adder_7 (
   wire [31:0] s6_res_nan       = { 1'b0,    8'hFF,         23'h400000 };
 
   wire [31:0] s6_res_comb =
-      (r6_a_is_nan | r6_b_is_nan | (r6_a_is_inf & r6_b_is_inf & (a[31]^b[31]))) ? s6_res_nan :
+      (r6_a_is_nan | r6_b_is_nan | (r6_a_is_inf & r6_b_is_inf & (r6_sign_a ^ r6_sign_b))) ? s6_res_nan :
       (r6_a_is_inf | r6_b_is_inf) ? s6_res_inf :
       (s6_both_zero | (r6_mant_final==28'd0)) ? s6_res_zero :
       s6_overflow  ? s6_res_overflow :

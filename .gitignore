@@ -1,0 +1,25 @@
+# simulation outputs
+build/
+logs/
+*.vvp
+*.vcd
+*.fst
+*.fsdb
+output.txt
+ans_out.txt
+__pycache__/
+# EDA tool droppings (never commit these)
+csrc/
+simv*
+*.daidir/
+ucli.key
+novas*
+nWaveLog/
+verdiLog/
+command.log
+default.svf
+*.syn
+*.pvl
+*.mr
+coverage*.dat
+build_*/

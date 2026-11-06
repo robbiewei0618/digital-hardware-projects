@@ -80,9 +80,12 @@ module FLP_mul (
                                 prod;
 
   // 指數補償：右移1 → +1；左移L → -L
-  wire signed [10:0] exp_sum = exp_a_s + exp_b_s
-                             + ((shift_to_46 == -7'sd1) ? 11'sd1 : 11'sd0)
-                             - ((shift_to_46 > 7'sd0)  ? {{5{1'b0}}, shift_to_46[5:0]} : 11'sd0);
+  // NOTE: every operand must be signed. An unsigned concatenation here
+  // makes the whole expression unsigned and zero-extends exp_a_s/exp_b_s.
+  wire signed [10:0] norm_adj = (shift_to_46 == -7'sd1) ?  11'sd1 :
+                                (shift_to_46 >   7'sd0) ? -$signed({5'b0, shift_to_46[5:0]}) :
+                                                           11'sd0;
+  wire signed [10:0] exp_sum = exp_a_s + exp_b_s + norm_adj;
 
   // ---------------- 捨入：ties-to-even ----------------
   // 取要保留的 24 位（含隱藏位）：mant_norm_pre[46:23]

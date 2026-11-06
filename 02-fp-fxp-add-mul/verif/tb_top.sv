@@ -80,7 +80,8 @@ module tb_top;
     cp_a:   coverpoint cv_ca;
     cp_b:   coverpoint cv_cb;
     x_ab:   cross cp_a, cp_b;
-    cp_res: coverpoint cv_cr;
+    // flush-to-zero contract: a subnormal result is illegal (SVA a_ftz)
+    cp_res: coverpoint cv_cr { ignore_bins ftz = {CL_SUB}; }
     cp_round: coverpoint cv_rd iff (cv_finite);
     cp_ediff: coverpoint cv_ediff iff (cv_finite) {
       bins d0 = {0}; bins d1 = {1}; bins d2_23 = {[2:23]}; bins d24_26 = {[24:26]}; bins far = {[27:$]};
@@ -98,7 +99,7 @@ module tb_top;
     cp_a:   coverpoint cv_ca;
     cp_b:   coverpoint cv_cb;
     x_ab:   cross cp_a, cp_b;
-    cp_res: coverpoint cv_cr;
+    cp_res: coverpoint cv_cr { ignore_bins ftz = {CL_SUB}; }
     cp_round: coverpoint cv_rd iff (cv_finite);
     // biased exponent of the exact product (before normalisation)
     cp_esum: coverpoint cv_esum iff (cv_finite) {

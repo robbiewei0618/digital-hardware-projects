@@ -21,3 +21,4 @@ default.svf
 *.syn
 *.pvl
 *.mr
+coverage*.dat

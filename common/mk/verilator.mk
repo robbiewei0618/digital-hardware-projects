@@ -31,7 +31,7 @@ LOG  := $(LOGDIR)/$(TOP)_seed$(SEED).log
 .PHONY: build run clean
 run: $(SIMV)
 	@mkdir -p $(LOGDIR)
-	./$(SIMV) +verilator+seed+$(SEED) $(if $(NUM),+NUM=$(NUM),) $(RUN_ARGS) 2>&1 | tee $(LOG); \
+	./$(SIMV) +verilator+seed+$(SEED) +verilator+coverage+file+$(LOGDIR)/coverage_seed$(SEED).dat $(if $(NUM),+NUM=$(NUM),) $(RUN_ARGS) 2>&1 | tee $(LOG); \
 	  test $${PIPESTATUS[0]} -eq 0 && grep -q "TEST PASSED" $(LOG)
 
 build: $(SIMV)

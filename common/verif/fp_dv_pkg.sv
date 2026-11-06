@@ -24,6 +24,10 @@ package fp_dv_pkg;
       input int unsigned x1, input int unsigned x2, input int unsigned x3, input int unsigned x4,
       input int unsigned y1, input int unsigned y2, input int unsigned y3, input int unsigned y4,
       input int mode, output int flags);
+  import "DPI-C" function int fpref_dot4_window_ok(input int fmt,
+      input int unsigned x1, input int unsigned x2, input int unsigned x3, input int unsigned x4,
+      input int unsigned y1, input int unsigned y2, input int unsigned y3, input int unsigned y4,
+      input int unsigned z, input int mode, input int window_bits);
 
   localparam int FP32 = 0, FP16 = 1;
   localparam int MODE_IEEE = 0, MODE_FTZ = 1, MODE_DAZ = 2;

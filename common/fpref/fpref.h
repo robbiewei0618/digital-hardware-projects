@@ -41,6 +41,10 @@ uint32_t fpref_dot4(int fmt,
                     uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4,
                     uint32_t y1, uint32_t y2, uint32_t y3, uint32_t y4,
                     int mode, int *flags);
+int      fpref_dot4_window_ok(int fmt,
+                    uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4,
+                    uint32_t y1, uint32_t y2, uint32_t y3, uint32_t y4,
+                    uint32_t z, int mode, int window_bits);
 int      fpref_class(int fmt, uint32_t x);
 
 #ifdef __cplusplus

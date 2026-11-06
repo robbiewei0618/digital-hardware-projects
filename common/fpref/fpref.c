@@ -315,6 +315,56 @@ uint32_t fpref_dot4(int fmt,
     return round_acc(f, &acc, zs, mode, flags);
 }
 
+// Accuracy check for windowed (finite-accumulator) dot-product hardware.
+// Returns 1 if the DUT result z satisfies
+//     |z - S| <= ulp(RN(S)) + 4 * 2^(Emax - window_bits)
+// where S is the exact dot product and Emax the exponent of the largest
+// |x_i*y_i| (weight of its leading bit). Products below that window can only
+// be represented by a sticky bit, so when large terms cancel exactly a
+// hardware implementation can be off by up to this amount.
+int fpref_dot4_window_ok(int fmt,
+                         uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4,
+                         uint32_t y1, uint32_t y2, uint32_t y3, uint32_t y4,
+                         uint32_t z, int mode, int window_bits) {
+    fmt_t f = get_fmt(fmt);
+    uint32_t xs[4] = {x1, x2, x3, x4}, ys[4] = {y1, y2, y3, y4};
+    acc_t acc; acc_init(&acc);
+    int emax = -100000, any = 0;
+    for (int i = 0; i < 4; i++) {
+        op_t x = decode(f, xs[i], mode), y = decode(f, ys[i], mode);
+        if (x.kind != K_FINITE || y.kind != K_FINITE) {
+            if (x.kind == K_ZERO || y.kind == K_ZERO) continue;
+            return 0;                              // Inf/NaN: no bound applies
+        }
+        uint64_t p = x.sig * y.sig;
+        int e = x.exp + y.exp + 63 - __builtin_clzll(p);
+        if (e > emax) emax = e;
+        any = 1;
+        acc_add_term(&acc, x.sign ^ y.sign, p, x.exp + y.exp);
+    }
+    op_t zd = decode(f, z, 0);
+    if (zd.kind == K_NAN) return 0;
+    if (zd.kind == K_INF)   // only if the window error itself can exceed the format
+        return any && (emax - window_bits + 2) >= f.bias + 1;
+    if (zd.kind == K_FINITE) acc_add_term(&acc, !zd.sign, zd.sig, zd.exp);   // S - z
+    big_t diff;
+    if (big_cmp(&acc.pos, &acc.neg) >= 0) big_sub(&diff, &acc.pos, &acc.neg);
+    else                                  big_sub(&diff, &acc.neg, &acc.pos);
+    // ulp of the correctly rounded result (normal-range minimum if tiny)
+    int fl = 0;
+    uint32_t r = fpref_dot4(fmt, x1, x2, x3, x4, y1, y2, y3, y4, mode, &fl);
+    int er = (int)((r >> f.mbits) & ((1u << f.ebits) - 1));
+    if (er == 0) er = 1;
+    int ulp_exp = er - f.bias - f.mbits;
+    big_t bound, t;
+    big_from_shifted(&bound, 1, ulp_exp - LSB_EXP);
+    if (any) {
+        int w = emax - window_bits + 2;            // 4 * 2^(emax - W)
+        if (w - LSB_EXP >= 0) { big_from_shifted(&t, 1, w - LSB_EXP); big_add(&bound, &bound, &t); }
+    }
+    return big_cmp(&diff, &bound) <= 0;
+}
+
 // classification helper used by the coverage models
 int fpref_class(int fmt, uint32_t x) {
     fmt_t f = get_fmt(fmt);

@@ -37,6 +37,7 @@ set t_out 0.02
 # current_design $Top
 analyze -format verilog {
     ../rtl/FLP_FMA_4.v
+    ../rtl/fma_datapath.v
 }
 elaborate $Top
 

@@ -74,8 +74,12 @@ module mul_trunc_var_array #(
         end
     endgenerate
     
-    // Total correction = var_corr + (2^K - 1)
-    wire [4:0] total_corr = var_corr + ((1 << K) - 1);
+    // Total correction = var_corr + 2^(K-1)
+    // Moving column R-1 up one column already estimates the truncated part;
+    // on top of it only the rounding constant 1/2 ULP = 2^(N-1) = 2^(K-1) at
+    // column R belongs. (The first version added 2^K - 1, almost a full ULP,
+    // which pushed the error up to +1.10 ULP - see BUGS.md.)
+    wire [4:0] total_corr = var_corr + (1 << (K - 1));
     
     //=========================================================================
     // Truncated CSA Array: only WIDTH columns

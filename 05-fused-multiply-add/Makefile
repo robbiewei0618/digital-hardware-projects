@@ -14,10 +14,10 @@ all: legacy verif
 # checked by `make verif` against the course definition (a*b + c)[63:32].
 legacy:
 	@rc=0; \
-	$(RUN) FLP_FMA_normal    $(OK) "" tb/legacy -- -DTEST_FLP_FMA   $(TB) $(R)/FLP_FMA.v   || rc=1; \
-	$(RUN) FLP_FMA_special   $(OK) "" tb/legacy -- -DTEST_FLP_FMA   $(SPECIAL) $(TB) $(R)/FLP_FMA.v   || rc=1; \
-	$(RUN) FLP_FMA_4_normal  $(OK) "" tb/legacy -- -DTEST_FLP_FMA_4 $(TB) $(R)/FLP_FMA_4.v || rc=1; \
-	$(RUN) FLP_FMA_4_special $(OK) "" tb/legacy -- -DTEST_FLP_FMA_4 $(SPECIAL) $(TB) $(R)/FLP_FMA_4.v || rc=1; \
+	$(RUN) FLP_FMA_normal    $(OK) "" tb/legacy -- -DTEST_FLP_FMA   $(TB) $(R)/FLP_FMA.v $(R)/fma_datapath.v || rc=1; \
+	$(RUN) FLP_FMA_special   $(OK) "" tb/legacy -- -DTEST_FLP_FMA   $(SPECIAL) $(TB) $(R)/FLP_FMA.v $(R)/fma_datapath.v || rc=1; \
+	$(RUN) FLP_FMA_4_normal  $(OK) "" tb/legacy -- -DTEST_FLP_FMA_4 $(TB) $(R)/FLP_FMA_4.v $(R)/fma_datapath.v || rc=1; \
+	$(RUN) FLP_FMA_4_special $(OK) "" tb/legacy -- -DTEST_FLP_FMA_4 $(SPECIAL) $(TB) $(R)/FLP_FMA_4.v $(R)/fma_datapath.v || rc=1; \
 	exit $$rc
 
 verif:

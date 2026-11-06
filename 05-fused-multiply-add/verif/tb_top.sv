@@ -129,6 +129,13 @@ module tb_top;
       z = fp_pack(FP32, $urandom_range(0, 1), ep, rand_mant(FP32));
       return;
     end
+    if (s < 80) begin                                           // subnormal x huge: product with leading zeros
+      x = fp_pack(FP32, $urandom_range(0, 1), 0, $urandom_range(0, 1) ? (1 << $urandom_range(0, 22)) : ($urandom & 23'hFF));
+      y = fp_pack(FP32, $urandom_range(0, 1), $urandom_range(200, 254), $urandom_range(0, 2) == 0 ? 0 : rand_mant(FP32));
+      z = fp_pack(FP32, $urandom_range(0, 1), (exp_unb(y) - 149 + 127) + $urandom_range(0, 60) - 40, rand_mant(FP32));
+      if ($urandom_range(0, 1)) begin logic [31:0] tmp = x; x = y; y = tmp; end
+      return;
+    end
     if (s < 87) begin                                           // product on a tie, tiny addend
       int k = $urandom_range(0, 40) - 20;
       x = fp_pack(FP32, $urandom_range(0, 1), 127 + k, 23'h40_0000);       // 1.5 * 2^k

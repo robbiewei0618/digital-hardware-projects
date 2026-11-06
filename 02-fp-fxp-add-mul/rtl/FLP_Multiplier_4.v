@@ -140,6 +140,7 @@ module FLP_Multiplier_4 (
   reg        r1_sign_result;
   reg signed [10:0] r1_exp_sum;
   reg [47:0] r1_mant_norm_pre;
+  reg        r1_shift_sticky;     // product LSB dropped by the 1-bit right shift
   reg        r1_product_is_zero;
 
   always @(posedge clk) begin
@@ -153,6 +154,7 @@ module FLP_Multiplier_4 (
       r1_sign_result <= 0;
       r1_exp_sum <= 0;
       r1_mant_norm_pre <= 0;
+      r1_shift_sticky <= 0;
       r1_product_is_zero <= 0;
     end else begin
       r1_a_zero <= a_is_zero;
@@ -164,6 +166,7 @@ module FLP_Multiplier_4 (
       r1_sign_result <= sign_result;
       r1_exp_sum <= exp_sum;
       r1_mant_norm_pre <= mant_norm_pre;
+      r1_shift_sticky <= (shift_amount == -7'sd1) & product[0];
       r1_product_is_zero <= product_is_zero;
     end
   end
@@ -178,7 +181,7 @@ module FLP_Multiplier_4 (
   wire [23:0] keep24   = r1_mant_norm_pre[46:23];
   wire        lsb_keep = keep24[0];                      // 保留部分的 LSB
   wire        guard    = r1_mant_norm_pre[22];           // 保護位
-  wire        sticky   = |r1_mant_norm_pre[21:0];        // 黏滯位（所有更低位的 OR）
+  wire        sticky   = (|r1_mant_norm_pre[21:0]) | r1_shift_sticky; // 黏滯位（含右移丟掉的位）
 
   // Ties-to-even 規則：當 guard=1 且（sticky=1 或 LSB=1）時進位
   wire round_up = guard & (sticky | lsb_keep);

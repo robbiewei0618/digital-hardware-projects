@@ -9,6 +9,7 @@ to this entry. Error counts are from the default regression
 | # | DUT | Found by | Effect before the fix |
 |---|-----|----------|-----------------------|
 | 1 | `FLP_Multiplier` | scoreboard + `a_exp_sum` (white-box SVA) | 77 149 / 200 493 wrong results (38 %); course TB 43 / 100 |
+| 2 | `FLP_Multiplier`, `FLP_Multiplier_4` | scoreboard (all-ones mantissa operands) | 20 / 200 493 results 1 ULP low; course TB 100 / 100 |
 
 ---
 
@@ -41,3 +42,25 @@ turned into a large positive number.
 but only because its random operands happen to mix magnitudes; it gives
 no hint *where* the error is. The white-box SVA pointed straight at the
 exponent adder.
+
+## 2. Multipliers: sticky bit lost when the product is normalised right
+
+**Symptom.** After fix 1, both multipliers were still 1 ULP low on a few
+products whose mantissas are all ones, e.g.
+`0xc03fffff * 0x403fffff` gave `0xc10ffffe` instead of `0xc10fffff`.
+
+**Root cause.** A 24×24-bit significand product lies in [1, 4). When it
+is ≥ 2 the design shifts it right by one (`prod >> 1`) but the bit shifted
+out was not ORed into the sticky bit. For `0xBFFFFF²` = `0x8FFFFE800001`
+the shifted value has guard = 1 and all lower bits 0 — a perfect tie, so
+ties-to-even kept the even value — but the dropped LSB was 1, so the exact
+value was *above* the half-way point and had to round up.
+
+**Fix.** `sticky |= prod[0]` when the right shift is taken (in
+`FLP_Multiplier_4` the dropped bit is carried through the stage-1
+register as `r1_shift_sticky`).
+
+**Why the course testbench missed it.** It needs guard = 1 *and* the 22
+lower bits all zero — about one random product in 2²³. The corpus here hits
+it through mantissa patterns (all ones, single bits) rather than uniform
+random values.

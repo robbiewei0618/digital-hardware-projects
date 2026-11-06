@@ -92,7 +92,8 @@ module FLP_mul (
   wire [23:0] keep24   = mant_norm_pre[46:23];   // 將成為 {1.hidden, frac[22:0]}
   wire        lsb_keep = keep24[0];              // 24 位中的 LSB（用於偶數捨入）
   wire        guard    = mant_norm_pre[22];      // 第一個丟棄位
-  wire        sticky_r = |mant_norm_pre[21:0];   // 其餘被丟位 OR 成 sticky
+  // 其餘被丟位 OR 成 sticky；乘積 >= 2 時右移 1 位丟掉的 prod[0] 也要算進去
+  wire        sticky_r = (|mant_norm_pre[21:0]) | ((shift_to_46 == -7'sd1) & prod[0]);
   wire        round_up = guard & (sticky_r | lsb_keep);
 
   // 先在 24 位空間捨入（避免多做進位帶來的位寬問題）

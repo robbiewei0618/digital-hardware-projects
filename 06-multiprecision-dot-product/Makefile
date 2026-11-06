@@ -18,12 +18,12 @@ legacy:
 	@rc=0; \
 	for d in DP4:TEST_DP4 DP4_pipeline:TEST_DP4_PIPELINE DP4_pipeline_CG:TEST_DP4_CG; do \
 	  m=$${d%%:*}; def=$${d##*:}; \
-	  $(RUN) $${m}_fp32 $(OK) "" tb/legacy -- -D$$def -DTEST_FP32 $(TB) $(R)/$$m.v || rc=1; \
-	  $(RUN) $${m}_fp16 $(OK) "" tb/legacy -- -D$$def $(F16) $(TB) $(R)/$$m.v || rc=1; \
+	  $(RUN) $${m}_fp32 $(OK) "" tb/legacy -- -D$$def -DTEST_FP32 $(TB) $(R)/$$m.v $(R)/dp4_datapath.v || rc=1; \
+	  $(RUN) $${m}_fp16 $(OK) "" tb/legacy -- -D$$def $(F16) $(TB) $(R)/$$m.v $(R)/dp4_datapath.v || rc=1; \
 	done; exit $$rc
 
 legacy-ta16:
-	-@$(RUN) DP4_fp16_ta_answers $(OK) "" tb/legacy -- -DTEST_DP4 $(TB) $(R)/DP4.v; \
+	-@$(RUN) DP4_fp16_ta_answers $(OK) "" tb/legacy -- -DTEST_DP4 $(TB) $(R)/DP4.v $(R)/dp4_datapath.v; \
 	  grep -E "Pass rate|FAILED" build/legacy/DP4_fp16_ta_answers.log | head -2
 
 verif:

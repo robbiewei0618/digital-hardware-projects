@@ -11,6 +11,7 @@ to this entry. Error counts are from the default regression
 | 1 | `FLP_Multiplier` | scoreboard + `a_exp_sum` (white-box SVA) | 77 149 / 200 493 wrong results (38 %); course TB 43 / 100 |
 | 2 | `FLP_Multiplier`, `FLP_Multiplier_4` | scoreboard (all-ones mantissa operands) | 20 / 200 493 results 1 ULP low; course TB 100 / 100 |
 | 3 | `FXP_mul` | scoreboard + `cp_sat` coverage | saturation never happened: 100 182 / 200 494 overflowing products wrapped around |
+| 4 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard (directed `x + x`) | every sum that carries out (≥ 2× the larger operand's leading bit) flushed to 0: `1.0 + 1.0 = 0`; 6 728 / 200 493 per adder; course TB 100 / 100 |
 
 ---
 
@@ -92,3 +93,27 @@ compare against the sign-extended limits, and only then narrow.
 scoreboard is needed to notice that the DUT did not saturate. The course
 testbench never exercised overflow (it also checked a different, 64-bit
 interface — see the project README).
+
+## 4. Adders: `1.0 + 1.0 = 0` — the same unsigned-expression trap
+
+**Symptom.** Any addition whose significand sum carries out — the result
+needs a 1-bit right shift — returned zero: `0x3f800000 + 0x3f800000`
+(1 + 1) gave `0x00000000`, `3 + 1` gave `0x00800000`. All three adders.
+
+**Root cause.**
+
+```verilog
+wire signed [9:0] exp_norm_pre = {{1{exp_big_s[8]}}, exp_big_s} - shift;
+```
+
+`shift` is `-1` for the right-shift case, but the concatenation on the left
+is unsigned, so the subtraction is unsigned and `-1` is zero-extended to
+`+127`: the exponent drops by 127 and the result underflows to 0. (Bug 1
+in the multiplier is the same mistake.)
+
+**Fix.** `$signed({exp_big_s[8], exp_big_s}) - shift`.
+
+**Why the course testbench missed it.** Its 100 vectors are random bit
+patterns; a carry-out needs equal signs *and* nearly equal exponents, which
+none of them had. The directed corner matrix here contains `x + x` for
+every corner value, so the bug showed up in the first 200 vectors.

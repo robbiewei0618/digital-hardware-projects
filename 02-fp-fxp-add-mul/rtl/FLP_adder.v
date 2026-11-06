@@ -108,7 +108,7 @@ module FLP_adder (
                           mant_sum_abs;
 
   // exponent 補償（做有號加減；先把 9b 符號延伸到 10b）
-  wire signed [9:0] exp_norm_pre = {{1{exp_big_s[8]}}, exp_big_s} - shift;
+  wire signed [9:0] exp_norm_pre = $signed({exp_big_s[8], exp_big_s}) - shift;  // both operands signed
 
   // normalize 若為「右移 1」，丟掉的原始 LSB 也要併入 sticky（避免差 1 ULP）
   wire sticky_from_norm = (shift == -7'sd1) ? mant_sum_abs[0] : 1'b0;

@@ -120,7 +120,7 @@ module FLP_adder_4 (
       (shift >  7'sd0)  ? (s2_abs << shift[5:0]) :
                           s2_abs;
 
-  wire signed [9:0] exp_norm_pre = {{1{r1_exp_big_s[8]}}, r1_exp_big_s} - shift;
+  wire signed [9:0] exp_norm_pre = $signed({r1_exp_big_s[8], r1_exp_big_s}) - shift;  // both operands signed
 
   // normalize 右移造成的 sticky
   wire sticky_norm = (shift == -7'sd1) ? s2_abs[0] : 1'b0;

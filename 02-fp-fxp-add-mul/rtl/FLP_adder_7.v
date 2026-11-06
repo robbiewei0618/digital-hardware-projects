@@ -164,7 +164,7 @@ module FLP_adder_7 (
       (s4_shift == -7'sd1) ? (r4_abs >> 1) :
       (s4_shift >  7'sd0)  ? (r4_abs << s4_shift[5:0]) :
                              r4_abs;
-  wire signed [9:0] s4_exp_pre = {{1{r4_exp_big_s[8]}}, r4_exp_big_s} - s4_shift;
+  wire signed [9:0] s4_exp_pre = $signed({r4_exp_big_s[8], r4_exp_big_s}) - s4_shift;  // both operands signed
   wire s4_sticky_norm = (s4_shift == -7'sd1) ? r4_abs[0] : 1'b0;
 
   reg        r5_a_is_zero, r5_b_is_zero, r5_a_is_inf, r5_b_is_inf, r5_a_is_nan, r5_b_is_nan;

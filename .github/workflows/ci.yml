@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reference-model:
+    name: Reference model self-test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make selftest
+
+  legacy:
+    name: Course testbenches (Icarus Verilog)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog > /dev/null && iverilog -V | head -1
+      - run: make legacy 2>&1 | tee legacy.log
+      - if: always()
+        run: python3 scripts/summarize.py legacy.log >> $GITHUB_STEP_SUMMARY
+
+  verification:
+    name: Verification (Verilator, SVA + coverage)
+    runs-on: ubuntu-24.04
+    needs: reference-model
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-verilator
+      - run: make verif 2>&1 | tee verif.log
+      - if: always()
+        run: python3 scripts/summarize.py verif.log >> $GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-logs
+          path: |
+            verif.log
+            */verif/logs/
+          retention-days: 14

@@ -38,7 +38,7 @@ def parse(lines):
 def table(rows, legacy, cov, sva):
     out = ['| Project | Checker | Checks | Errors | Result |', '|---|---|---:|---:|:---:|']
     for p, name, n, e, res, extra in rows:
-        note = f' ({extra})' if extra else ''
+        note = f' {extra}' if extra.startswith('(') else (f' ({extra})' if extra else '')
         out.append(f'| {p} | {name}{note} | {n:,} | {e} | {"✅" if res == "PASS" else "❌"} |')
     out += ['', '| Project | Course testbenches (Icarus) | Functional coverage | SVA failures |', '|---|---|---|---:|']
     for p in sorted(set(list(legacy) + list(cov))):

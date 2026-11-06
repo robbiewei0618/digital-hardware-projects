@@ -13,6 +13,7 @@ to this entry. Error counts are from the default regression
 | 3 | `FXP_mul` | scoreboard + `cp_sat` coverage | saturation never happened: 100 182 / 200 494 overflowing products wrapped around |
 | 4 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard (directed `x + x`) | every sum that carries out (≥ 2× the larger operand's leading bit) flushed to 0: `1.0 + 1.0 = 0`; 6 728 / 200 493 per adder; course TB 100 / 100 |
 | 5 | `FLP_adder_4`, `FLP_adder_7` | scoreboard (back-to-back Inf operands) | Inf results took the sign of the operand *currently at the input*, not of the one in flight: 3 959 / 200 491 wrong |
+| 6 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard + `x_effsub_round` coverage | effective subtractions with a far-away small operand rounded 1 ULP high: 3 372 / 200 493 per adder |
 
 ---
 
@@ -144,3 +145,32 @@ were 6 stages stale.
 holds each input for a full cycle per vector, so even a stale read would
 often see the same value. A stream that changes every cycle plus
 special-value operands is what exposes stage-alignment mistakes.
+
+## 6. Adders: effective subtraction rounded on the wrong side
+
+**Symptom.** `0x47c00000 + 0xbb97ee63` (98304 − 0.0046) returned
+`0x47c00000` unchanged; the correctly rounded result is `0x47bfffff`.
+Always an effective subtraction, always 1 ULP too large.
+
+**Root cause.** The datapath kept two bits below the result LSB (Q3.25)
+and collected the bits shifted out during alignment into a separate
+`sticky_from_align`, ORed in *after* the addition. For an addition that is
+fine. For a subtraction it is not: the discarded bits make the true
+difference slightly **smaller** than `big − truncated(small)`, but a sticky
+bit ORed in afterwards says the value is slightly *larger*. Near a rounding
+boundary the decision flips. In the example the truncated difference sits
+exactly on the half-way point, the real one is just below it.
+
+Two bits were also too few: after an effective subtraction the result can
+need a 1-bit left shift, which consumes one of them, leaving no separate
+round and sticky bits.
+
+**Fix.** Standard guard/round/sticky datapath: the mantissa is widened to
+29 bits (three bits below the LSB) and the alignment sticky is *jammed*
+into bit 0 of the shifted operand before the add/subtract, so it takes
+part in the subtraction as a borrow. Applied to all three adders.
+
+**Why the course testbench missed it.** Random bit patterns rarely produce
+a difference that lands within one alignment-sticky of a half-way point.
+The coverage cross `x_effsub_round` (effective subtraction × rounding
+outcome) is what this stimulus targets.

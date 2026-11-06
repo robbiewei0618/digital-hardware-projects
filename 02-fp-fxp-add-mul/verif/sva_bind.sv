@@ -32,10 +32,10 @@ bind FLP_mul flp_mul_internal_sva u_int_sva (
 // FLP_adder: the normalised sum has its leading one at bit 25 (Q3.25)
 module flp_add_internal_sva (
   input logic        clk,
-  input logic [27:0] mant_sum_abs,
-  input logic [27:0] mant_norm_pre
+  input logic [28:0] mant_sum_abs,
+  input logic [28:0] mant_norm_pre
 );
-  a_norm: assert property (@(posedge clk) mant_sum_abs != 0 |-> mant_norm_pre[27:25] == 3'b001)
+  a_norm: assert property (@(posedge clk) mant_sum_abs != 0 |-> mant_norm_pre[28:26] == 3'b001)
     else begin $error("[SVA] FLP_adder not normalised: sum %h -> %h", mant_sum_abs, mant_norm_pre); fp_dv_pkg::sva_errors++; end
 endmodule
 

@@ -38,16 +38,16 @@ module FLP_adder_7 (
   wire signed [8:0] s0_exp_b_s = (s0_exp_b_raw==8'd0) ? 9'sd1 - $signed({1'b0,BIAS})
                                                       : $signed({1'b0,s0_exp_b_raw}) - $signed({1'b0,BIAS});
 
-  wire [27:0] s0_mant_a_u = {2'b00, (s0_exp_a_raw==8'd0)?1'b0:1'b1, s0_frac_a, 2'b00};
-  wire [27:0] s0_mant_b_u = {2'b00, (s0_exp_b_raw==8'd0)?1'b0:1'b1, s0_frac_b, 2'b00};
+  wire [28:0] s0_mant_a_u = {2'b00, (s0_exp_a_raw==8'd0)?1'b0:1'b1, s0_frac_a, 3'b000};
+  wire [28:0] s0_mant_b_u = {2'b00, (s0_exp_b_raw==8'd0)?1'b0:1'b1, s0_frac_b, 3'b000};
 
-  wire signed [27:0] s0_mant_a_s = s0_sign_a ? -$signed(s0_mant_a_u) : $signed(s0_mant_a_u);
-  wire signed [27:0] s0_mant_b_s = s0_sign_b ? -$signed(s0_mant_b_u) : $signed(s0_mant_b_u);
+  wire signed [28:0] s0_mant_a_s = s0_sign_a ? -$signed(s0_mant_a_u) : $signed(s0_mant_a_u);
+  wire signed [28:0] s0_mant_b_s = s0_sign_b ? -$signed(s0_mant_b_u) : $signed(s0_mant_b_u);
 
   reg        r1_a_is_zero, r1_b_is_zero, r1_a_is_inf, r1_b_is_inf, r1_a_is_nan, r1_b_is_nan;
   reg        r1_sign_a, r1_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r1_exp_a_s, r1_exp_b_s;
-  reg signed [27:0] r1_mant_a_s, r1_mant_b_s;
+  reg signed [28:0] r1_mant_a_s, r1_mant_b_s;
   always @(posedge clk) begin
     if (rst) begin
       r1_a_is_zero<=0; r1_b_is_zero<=0; r1_a_is_inf<=0; r1_b_is_inf<=0; r1_a_is_nan<=0; r1_b_is_nan<=0;
@@ -67,13 +67,13 @@ module FLP_adder_7 (
   wire swap1 = (r1_exp_a_s < r1_exp_b_s);
   wire signed [8:0]  s1_exp_big_s   = swap1 ? r1_exp_b_s : r1_exp_a_s;
   wire signed [8:0]  s1_exp_small_s = swap1 ? r1_exp_a_s : r1_exp_b_s;
-  wire signed [27:0] s1_mant_big    = swap1 ? r1_mant_b_s: r1_mant_a_s;
-  wire signed [27:0] s1_mant_small  = swap1 ? r1_mant_a_s: r1_mant_b_s;
+  wire signed [28:0] s1_mant_big    = swap1 ? r1_mant_b_s: r1_mant_a_s;
+  wire signed [28:0] s1_mant_small  = swap1 ? r1_mant_a_s: r1_mant_b_s;
 
   reg        r2_a_is_zero, r2_b_is_zero, r2_a_is_inf, r2_b_is_inf, r2_a_is_nan, r2_b_is_nan;
   reg        r2_sign_a, r2_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r2_exp_big_s, r2_exp_small_s;
-  reg signed [27:0] r2_mant_big, r2_mant_small;
+  reg signed [28:0] r2_mant_big, r2_mant_small;
   always @(posedge clk) begin
     if (rst) begin
       r2_a_is_zero<=0; r2_b_is_zero<=0; r2_a_is_inf<=0; r2_b_is_inf<=0; r2_a_is_nan<=0; r2_b_is_nan<=0;
@@ -92,31 +92,34 @@ module FLP_adder_7 (
   // -------- s2（對齊 + alignment sticky）--------
   wire signed [8:0]  s2_de_s = r2_exp_big_s - r2_exp_small_s;
   wire        [8:0]  s2_de   = $unsigned(s2_de_s);
-  wire               s2_ge_26= (s2_de >= 9'd26);
+  wire               s2_ge_32= (s2_de >= 9'd32);
 
-  wire [27:0] s2_small_mag = r2_mant_small[27] ? (~r2_mant_small + 28'd1) : r2_mant_small;
-  function [27:0] low_mask28;
+  wire [28:0] s2_small_mag = r2_mant_small[28] ? (~r2_mant_small + 29'd1) : r2_mant_small;
+  function [28:0] low_mask29;
     input [4:0] n; integer k;
     begin
-      low_mask28 = 28'd0;
-      for (k=0; k<28; k=k+1)
-        if (k < n) low_mask28[k] = 1'b1;
+      low_mask29 = 29'd0;
+      for (k=0; k<29; k=k+1)
+        if (k < n) low_mask29[k] = 1'b1;
     end
   endfunction
 
-  wire [27:0] s2_small_mag_shift = s2_ge_26 ? 28'd0 : (s2_small_mag >> s2_de[4:0]);
-  wire signed [27:0] s2_small_al =
-      r2_mant_small[27] ? -$signed(s2_small_mag_shift) : $signed(s2_small_mag_shift);
-
   wire s2_sticky_align =
-      s2_ge_26 ? (|s2_small_mag) :
+      s2_ge_32 ? (|s2_small_mag) :
       (s2_de[4:0]==5'd0) ? 1'b0 :
-      |(s2_small_mag & low_mask28(s2_de[4:0]));
+      |(s2_small_mag & low_mask29(s2_de[4:0]));
+
+  // {.., G, R, S}: the shifted-out bits are jammed into the LSB *before*
+  // the add/subtract, so an effective subtraction sees them as a borrow
+  wire [28:0] s2_small_mag_shift = (s2_ge_32 ? 29'd0 : (s2_small_mag >> s2_de[4:0]))
+                                 | {28'd0, s2_sticky_align};
+  wire signed [28:0] s2_small_al =
+      r2_mant_small[28] ? -$signed(s2_small_mag_shift) : $signed(s2_small_mag_shift);
 
   reg        r3_a_is_zero, r3_b_is_zero, r3_a_is_inf, r3_b_is_inf, r3_a_is_nan, r3_b_is_nan;
   reg        r3_sign_a, r3_sign_b;   // input signs travel with the Inf/NaN flags
   reg signed [8:0]  r3_exp_big_s;
-  reg signed [27:0] r3_mant_big, r3_mant_small_al;
+  reg signed [28:0] r3_mant_big, r3_mant_small_al;
   reg               r3_sticky_align;
   always @(posedge clk) begin
     if (rst) begin
@@ -135,14 +138,14 @@ module FLP_adder_7 (
   end
 
   // -------- s3（有號加法 → 絕對值）--------
-  wire signed [27:0] s3_sum_s = r3_mant_big + r3_mant_small_al;
-  wire               s3_sign  = s3_sum_s[27];
-  wire [27:0]        s3_abs   = s3_sign ? (~s3_sum_s + 28'd1) : s3_sum_s;
+  wire signed [28:0] s3_sum_s = r3_mant_big + r3_mant_small_al;
+  wire               s3_sign  = s3_sum_s[28];
+  wire [28:0]        s3_abs   = s3_sign ? (~s3_sum_s + 29'd1) : s3_sum_s;
 
   reg        r4_a_is_zero, r4_b_is_zero, r4_a_is_inf, r4_b_is_inf, r4_a_is_nan, r4_b_is_nan;
   reg        r4_sign_a, r4_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r4_sign;
-  reg [27:0] r4_abs;
+  reg [28:0] r4_abs;
   reg signed [8:0] r4_exp_big_s;
   reg        r4_sticky_align;
   always @(posedge clk) begin
@@ -161,18 +164,18 @@ module FLP_adder_7 (
   end
 
   // -------- s4（LZC→shift→normalize + normalize 右移 sticky）--------
-  function [5:0] lzc28;
-    input [27:0] x; integer i; reg found;
+  function [5:0] lzc29;
+    input [28:0] x; integer i; reg found;
     begin
-      lzc28 = 6'd28; found=1'b0;
-      for (i=27;i>=0 && !found;i=i-1)
-        if (x[i]) begin lzc28=6'd27-i; found=1'b1; end
+      lzc29 = 6'd29; found=1'b0;
+      for (i=28;i>=0 && !found;i=i-1)
+        if (x[i]) begin lzc29=6'd28-i; found=1'b1; end
     end
   endfunction
 
-  wire [5:0]        s4_lzc   = lzc28(r4_abs);
+  wire [5:0]        s4_lzc   = lzc29(r4_abs);
   wire signed [6:0] s4_shift = $signed({1'b0,s4_lzc}) - 7'sd2;
-  wire [27:0] s4_norm_pre =
+  wire [28:0] s4_norm_pre =
       (s4_shift == -7'sd1) ? (r4_abs >> 1) :
       (s4_shift >  7'sd0)  ? (r4_abs << s4_shift[5:0]) :
                              r4_abs;
@@ -182,7 +185,7 @@ module FLP_adder_7 (
   reg        r5_a_is_zero, r5_b_is_zero, r5_a_is_inf, r5_b_is_inf, r5_a_is_nan, r5_b_is_nan;
   reg        r5_sign_a, r5_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r5_sign;
-  reg [27:0] r5_norm_pre;
+  reg [28:0] r5_norm_pre;
   reg signed [9:0] r5_exp_pre;
   reg        r5_sticky_all;
   always @(posedge clk) begin
@@ -196,26 +199,26 @@ module FLP_adder_7 (
       r5_a_is_nan <=r4_a_is_nan ; r5_b_is_nan <=r4_b_is_nan ;
       r5_sign_a<=r4_sign_a; r5_sign_b<=r4_sign_b;
       r5_sign<=r4_sign; r5_norm_pre<=s4_norm_pre; r5_exp_pre<=s4_exp_pre;
-      r5_sticky_all<= r4_sticky_align | s4_sticky_norm;
+      r5_sticky_all<= s4_sticky_norm;   // alignment sticky is already jammed into bit 0
     end
   end
 
   // -------- s5（round → renorm）--------
-  wire lsb_keep = r5_norm_pre[2];
-  wire guard    = r5_norm_pre[1];
-  wire sticky_r = r5_norm_pre[0] | r5_sticky_all;
+  wire lsb_keep = r5_norm_pre[3];
+  wire guard    = r5_norm_pre[2];
+  wire sticky_r = (|r5_norm_pre[1:0]) | r5_sticky_all;
 
   wire round_up = guard & (sticky_r | lsb_keep);
-  wire [27:0] s5_round = round_up ? (r5_norm_pre + 28'd4) : r5_norm_pre;
+  wire [28:0] s5_round = round_up ? (r5_norm_pre + 29'd8) : r5_norm_pre;
 
-  wire s5_need_renorm = s5_round[26];
-  wire [27:0] s5_mant_final = s5_need_renorm ? (s5_round >> 1) : s5_round;
+  wire s5_need_renorm = s5_round[27];
+  wire [28:0] s5_mant_final = s5_need_renorm ? (s5_round >> 1) : s5_round;
   wire signed [9:0] s5_exp_final_s = s5_need_renorm ? (r5_exp_pre + 10'sd1) : r5_exp_pre;
 
   reg        r6_a_is_zero, r6_b_is_zero, r6_a_is_inf, r6_b_is_inf, r6_a_is_nan, r6_b_is_nan;
   reg        r6_sign_a, r6_sign_b;   // input signs travel with the Inf/NaN flags
   reg        r6_sign;
-  reg [27:0] r6_mant_final;
+  reg [28:0] r6_mant_final;
   reg signed [9:0] r6_exp_final_s;
   always @(posedge clk) begin
     if (rst) begin
@@ -237,7 +240,7 @@ module FLP_adder_7 (
   wire s6_underflow = (s6_exp_bias_s11 <= 11'sd0);
 
   wire [7:0]  s6_exp_biased = s6_exp_bias_s11[7:0];
-  wire [23:0] s6_mant24     = r6_mant_final[25:2];
+  wire [23:0] s6_mant24     = r6_mant_final[26:3];
 
   wire s6_inf_sign = r6_a_is_inf ? r6_sign_a : r6_sign_b;
   wire s6_both_zero = r6_a_is_zero & r6_b_is_zero;
@@ -252,7 +255,7 @@ module FLP_adder_7 (
   wire [31:0] s6_res_comb =
       (r6_a_is_nan | r6_b_is_nan | (r6_a_is_inf & r6_b_is_inf & (r6_sign_a ^ r6_sign_b))) ? s6_res_nan :
       (r6_a_is_inf | r6_b_is_inf) ? s6_res_inf :
-      (s6_both_zero | (r6_mant_final==28'd0)) ? s6_res_zero :
+      (s6_both_zero | (r6_mant_final==29'd0)) ? s6_res_zero :
       s6_overflow  ? s6_res_overflow :
       s6_underflow ? s6_res_underflow :
                      s6_res_normal;

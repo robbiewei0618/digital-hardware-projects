@@ -17,8 +17,8 @@ set sh_line_editing_mode emacs
 history keep 100
 alias h history
 
-set Path_Top		"/MasterClass/M133040086_ALU/HW4/RTL/multiply_op.v"
-set Path_Syn		"/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/op/Delay/"
+set Path_Top		"../rtl/multiply_op.v"
+set Path_Syn		"./Gate_Level_SYN/op/Delay/"
 set Dump_file_name  "multiply_op_8x16"
 set Top				"multiply_op"
 set Clk_pin			"clk"
@@ -26,7 +26,7 @@ set Clk_period		"0.2"
 
 # [ Read Design File ]
 analyze -format verilog {
-    /MasterClass/M133040086_ALU/HW4/RTL/multiply_op.v
+    ../rtl/multiply_op.v
 }
 elaborate $Top
 current_design $Top

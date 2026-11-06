@@ -16,9 +16,9 @@ module testbench;
     adder_dataflow_reg  U2 (s_dataflow_reg, co_dataflow_reg, a, b, ci, clk);
     adder_behavior_reg  U3 (s_behavior_reg, co_behavior_reg, a, b, ci, clk);
 
-    RCA_32bit U4 (s_structure, co_structure, a, b, ci);
+    adder_structure U4 (s_structure, co_structure, a, b, ci);
     adder_dataflow U5 (s_dataflow, co_dataflow, a, b, ci);
-    adder_behavior_reg U6 (s_behavior, co_behavior, a, b, ci, clk);
+    adder_behavior U6 (s_behavior, co_behavior, a, b, ci);
 
     // Clock generation
     initial begin

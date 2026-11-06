@@ -5,19 +5,24 @@
 
 `timescale 1ns/1ps
 
-// Select which module to test
-//`define TEST_FXP_FMA
-`define TEST_FLP_FMA
-//`define TEST_FLP_FMA_4
+// Select which module to test on the command line:
+//   -DTEST_FXP_FMA | -DTEST_FLP_FMA | -DTEST_FLP_FMA_4
+// and the vector set with -DTD=\"data_normal\" (default) or \"data_special\"
+// together with -DDATA_NUM=<lines in that set>.
 
 `define CYCLE 5.0
+`ifndef DATA_NUM
 `define DATA_NUM 215
+`endif
+`ifndef TD
+`define TD "data_normal"
+`endif
 
-`define FILE_A "/MasterClass/M133040086_ALU/HW2/a.txt"
-`define FILE_B "/MasterClass/M133040086_ALU/HW2/b.txt"
-`define FILE_C "/MasterClass/M133040086_ALU/HW2/c.txt"
-`define FILE_ANS "/MasterClass/M133040086_ALU/HW2/ab+c.txt"
-`define FILE_OUT "/MasterClass/M133040086_ALU/HW2/output.txt"
+`define FILE_A   {`TD, "/a.txt"}
+`define FILE_B   {`TD, "/b.txt"}
+`define FILE_C   {`TD, "/c.txt"}
+`define FILE_ANS {`TD, "/ab+c.txt"}
+`define FILE_OUT "output.txt"
 
 module ALU_HW2_FMA_testbench();
     integer file_a, file_b, file_c, file_ans, file_out;
@@ -81,7 +86,7 @@ module ALU_HW2_FMA_testbench();
                 end
             end else begin
                 // 正常数和次正规数
-                temp = {x[31], {3'd0, x[30:23]}-127+1023, x[22:0], 29'd0};
+                temp = {x[31], {3'd0, x[30:23]}-11'd127+11'd1023, x[22:0], 29'd0};
                 bits_to_real = $bitstoreal(temp);
             end
         end

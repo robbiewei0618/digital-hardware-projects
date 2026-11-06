@@ -15,13 +15,10 @@ module tb_truncated_mul;
     // 測試檔案路徑 - 根據 N 修改
     // 8x8:   "8x8_a.txt",   "8x8_b.txt",   "8x8_ans.txt"
     // 16x16: "16x16_a.txt", "16x16_b.txt", "16x16_ans.txt"
-    //parameter A_FILE   = "/MasterClass/M133040086_ALU/HW5/8x8_a.txt";
-    //parameter B_FILE   = "/MasterClass/M133040086_ALU/HW5/8x8_b.txt";
-    //parameter ANS_FILE = "/MasterClass/M133040086_ALU/HW5/8x8_ans.txt";
-    
-    parameter A_FILE   = "/MasterClass/M133040086_ALU/HW5/16x16_a.txt";
-    parameter B_FILE   = "/MasterClass/M133040086_ALU/HW5/16x16_b.txt";
-    parameter ANS_FILE = "/MasterClass/M133040086_ALU/HW5/16x16_ans.txt";
+    // override with -P<top>.N=16 -P<top>.A_FILE=\"data/16x16_a.txt\" ...
+    parameter A_FILE   = "data/8x8_a.txt";
+    parameter B_FILE   = "data/8x8_b.txt";
+    parameter ANS_FILE = "data/8x8_ans.txt";
 
     // 1 ULP = 2^(n-1) - truncated multipliers should have error < 1 ULP
     localparam ULP = 1 << (N-1);

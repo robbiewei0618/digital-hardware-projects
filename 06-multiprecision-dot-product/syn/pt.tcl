@@ -21,17 +21,17 @@ set power_enable_analysis true
 set power_analysis_mode averaged
 set power_report_leakage_breakdowns true
 # gate-level .v
-read_verilog /home/m133040045/back_up/m133040045/ALU/HW3_ALU/FLP_DP_4/gate/delay/DP_4_syn.v
+read_verilog DP_4_syn.v
 #rtl top module name
 current_design $Top
 link
 
-read_sdc /home/m133040045/back_up/m133040045/ALU/HW3_ALU/FLP_DP_4/gate/delay/DP_4_syn.sdc
-read_sdf /home/m133040045/back_up/m133040045/ALU/HW3_ALU/FLP_DP_4/gate/delay/DP_4_syn.sdf
+read_sdc DP_4_syn.sdc
+read_sdf DP_4_syn.sdf
 check_timing
 update_timing
 
-read_vcd -strip_path testbench/test_module /home/m133040045/back_up/m133040045/ALU/HW3_ALU/FLP_DP_4/postsim/DP_4_wave.vcd
+read_vcd -strip_path testbench/test_module DP_4_wave.vcd
 
 check_power
 update_power

@@ -16,9 +16,9 @@ module tb_with_file;
     // 8x8:   "8x8_a.txt",   "8x8_b.txt",   "8x8_ans.txt"
     // 16x8:  "16x8_a.txt",  "16x8_b.txt",  "16x8_ans.txt"
     // 16x16: "16x16_a.txt", "16x16_b.txt", "16x16_ans.txt"
-    parameter A_FILE   = "8x8_a.txt";
-    parameter B_FILE   = "8x8_b.txt";
-    parameter ANS_FILE = "8x8_ans.txt";
+    parameter A_FILE   = "data/8x8_a.txt";
+    parameter B_FILE   = "data/8x8_b.txt";
+    parameter ANS_FILE = "data/8x8_ans.txt";
     
     localparam MN = M + N;
     

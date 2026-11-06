@@ -13,10 +13,10 @@
 `define CYCLE 5.0
 `define DATA_NUM 200
 
-`define FILE_A "/MasterClass/M133040086_ALU/HW2/a.txt"
-`define FILE_B "/MasterClass/M133040086_ALU/HW2/b.txt"
-`define FILE_C "/MasterClass/M133040086_ALU/HW2/c.txt"
-`define FILE_ANS "/MasterClass/M133040086_ALU/HW2/ans.txt"
+`define FILE_A "../data_normal/a.txt"
+`define FILE_B "../data_normal/b.txt"
+`define FILE_C "../data_normal/c.txt"
+`define FILE_ANS "ans_out.txt"
 
 module ALU_HW2_FMA_testbench();
     integer file_a, file_b, file_c, file_ans;

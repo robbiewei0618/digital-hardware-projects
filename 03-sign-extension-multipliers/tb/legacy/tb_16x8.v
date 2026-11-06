@@ -18,9 +18,9 @@ module tb_16x8;
     multiply_booth_opt #(M,N) u_booth_opt(a,b,p_booth_opt);
     
     initial begin
-        $readmemh("16x8_a.txt", a_mem);
-        $readmemh("16x8_b.txt", b_mem);
-        $readmemh("16x8_ans.txt", ans_mem);
+        $readmemh("data/16x8_a.txt", a_mem);
+        $readmemh("data/16x8_b.txt", b_mem);
+        $readmemh("data/16x8_ans.txt", ans_mem);
         #10;
         for (i = 0; i < NUM_TESTS; i = i + 1) begin
             a = a_mem[i]; b = b_mem[i]; #10;

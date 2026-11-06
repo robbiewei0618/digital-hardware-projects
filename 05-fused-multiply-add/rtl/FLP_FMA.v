@@ -2,7 +2,7 @@
 // 浮點數融合乘加運算器 (Floating-Point Fused Multiply-Add, FMA)
 // 功能：R = A × B + C
 // 標準：純 Verilog-2001 (IEEE 1364-2001)
-// 作者：M133040086
+// 作者：Funseng Wei
 // 日期：2025
 // 
 // 設計目標：
@@ -541,40 +541,3 @@ module FLP_FMA (
   assign R = {sign_out, exp_out, frac_out};
 
 endmodule
-```
-
----
-
-# 📊 設計思路總結
-
-## **整體架構**
-```
-輸入 A,B,C (IEEE-754)
-    ↓
-【1. 拆解】→ 符號、指數、尾數
-    ↓
-【2. 特殊值檢測】→ Zero, Inf, NaN
-    ↓
-【3. 加隱藏位】→ Ma, Mb, Mc (24-bit)
-    ↓
-【4. 指數計算】→ 未偏移值
-    ↓
-【5. 乘法】→ Mp = Ma × Mb (48-bit)
-    ↓
-【6. 對齊】→ 統一為 Q28.48 (80-bit)
-    ↓         ↑
-    └─(同時進行)
-    ↓
-【7. 二補數加法】→ 統一加減路徑
-    ↓
-【8. 溢位處理】→ 右移 + 指數調整
-    ↓
-【9. 歸一化】→ 對齊到 bit 46
-    ↓
-【10. 捨入】→ Round-to-Nearest-Even
-    ↓
-【11. 特殊情況】→ NaN, Inf, Over/Underflow
-    ↓
-【12. 輸出封裝】→ IEEE-754 格式
-    ↓
-輸出 R

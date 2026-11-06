@@ -15,13 +15,10 @@ module tb_truncated_mul;
     // 測試檔案路徑 - 根據 N 修改
     // 8x8:   "8x8_a.txt",   "8x8_b.txt",   "8x8_ans.txt"
     // 16x16: "16x16_a.txt", "16x16_b.txt", "16x16_ans.txt"
-    //parameter A_FILE   = "/MasterClass/M133040086_ALU/HW5/8x8_a.txt";
-    //parameter B_FILE   = "/MasterClass/M133040086_ALU/HW5/8x8_b.txt";
-    //parameter ANS_FILE = "/MasterClass/M133040086_ALU/HW5/8x8_ans.txt";
-    
-    parameter A_FILE   = "/MasterClass/M133040086_ALU/HW5/16x16_a.txt";
-    parameter B_FILE   = "/MasterClass/M133040086_ALU/HW5/16x16_b.txt";
-    parameter ANS_FILE = "/MasterClass/M133040086_ALU/HW5/16x16_ans.txt";
+    // override with -P<top>.N=16 -P<top>.A_FILE=\"data/16x16_a.txt\" ...
+    parameter A_FILE   = "data/8x8_a.txt";
+    parameter B_FILE   = "data/8x8_b.txt";
+    parameter ANS_FILE = "data/8x8_ans.txt";
 
     // 1 ULP = 2^(n-1) - truncated multipliers should have error < 1 ULP
     localparam ULP = 1 << (N-1);
@@ -72,36 +69,16 @@ module tb_truncated_mul;
     mul_trunc_var_array #(.N(N), .K((N==8)?2:3)) u_trunc_var (
         .a(a), .b(b), .p_msb(p_trunc_var)
     );
-        initial begin
-        //$dumpfile("multiplier_wave.vcd");
-       // $dumpvars(0, tb_with_file);
-
-        // Booth_opt post-synthesis SDF
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/booth/Delay/multiply_booth_8x8.sdf",
-            u_booth
-        );
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/booth_opt/Delay/multiply_booth_opt_8x8.sdf",
-            u_booth_opt
-        );
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/mbw/Delay/multiply_mbw.sdf",
-            mul_row
-        );
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/row_opt/Delay/multiply_row_opt.sdf",
-            u_row_opt
-        );
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/row/Delay/multiply_row.sdf",
-            u_row
-        );
-        $sdf_annotate(
-            "/MasterClass/M133040086_ALU/HW4/Gate_Level_SYN/op/Delay/multiply_op.sdf",
-            u_op
-        );
-
+    // Gate-level run: annotate each synthesized netlist with its SDF
+    // (the SDF names follow syn/dc.tcl: <module>.sdf in the run directory).
+    // The original file annotated instance names from the sign-extension
+    // project (u_booth, u_mbw ...), which do not exist in this testbench.
+    initial begin
+        $sdf_annotate("mul_operator.sdf",        u_op);
+        $sdf_annotate("mul_row.sdf",             u_row);
+        $sdf_annotate("mul_trunc_const_row.sdf", u_trunc_const);
+        $sdf_annotate("mul_array.sdf",           u_array);
+        $sdf_annotate("mul_trunc_var_array.sdf", u_trunc_var);
     end
     //=========================================================================
     // 測試程序

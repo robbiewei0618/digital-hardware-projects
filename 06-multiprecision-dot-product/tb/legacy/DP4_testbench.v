@@ -11,26 +11,32 @@
 // Configuration Section - Select test configuration
 // ============================================================
 
-// Step 1: Select which module to test (uncomment ONE)
-`define TEST_DP4              // Non-pipelined version
-//`define TEST_DP4_PIPELINE   // Pipelined version (4 stages)
-//`define TEST_DP4_CG         // Clock-gating version (4 stages)
-
-// Step 2: Select precision (uncomment ONE)
-//`define TEST_FP32             // Test single-precision (32-bit)
-`define TEST_FP16           // Test half-precision (16-bit)
+// Step 1: Select which module to test on the command line (ONE of):
+//   -DTEST_DP4  -DTEST_DP4_PIPELINE  -DTEST_DP4_CG
+// Step 2: Select precision: -DTEST_FP32, otherwise FP16 is tested.
+// Step 4 file names can be overridden with -DFILE_INPUT=... -DFILE_ANS=...
 
 // Step 3: Cycle time and data count
 `define CYCLE 10.0            // Clock period (ns)
 `define DATA_NUM 1000         // Number of test vectors
 
 // Step 4: File paths (modify according to your environment)
-`ifdef TEST_FP32
-    `define FILE_INPUT "/MasterClass/M133040086_ALU/HW3/FP32.txt"
-    `define FILE_ANS   "/MasterClass/M133040086_ALU/HW3/ans32.txt"
-`else
-    `define FILE_INPUT "/MasterClass/M133040086_ALU/HW3/FP16.txt"
-    `define FILE_ANS   "/MasterClass/M133040086_ALU/HW3/ans16.txt"
+`ifndef TEST_FP32
+    `define TEST_FP16
+`endif
+`ifndef FILE_INPUT
+  `ifdef TEST_FP32
+    `define FILE_INPUT "data/FP32.txt"
+  `else
+    `define FILE_INPUT "data/FP16.txt"
+  `endif
+`endif
+`ifndef FILE_ANS
+  `ifdef TEST_FP32
+    `define FILE_ANS   "data/ans32.txt"
+  `else
+    `define FILE_ANS   "data/ans16.txt"
+  `endif
 `endif
 
 // ============================================================

@@ -17,16 +17,16 @@ module testbench;
     adder_dataflow_reg  U2 (s_dataflow_reg, co_dataflow_reg, a, b, ci, clk);
     adder_behavior_reg  U3 (s_behavior_reg, co_behavior_reg, a, b, ci, clk);
 
-    RCA_32bit U4 (s_structure, co_structure, a, b, ci);//structure
+    adder_structure U4 (s_structure, co_structure, a, b, ci);//structure
     adder_dataflow U5 (s_dataflow, co_dataflow, a, b, ci);
-    adder_behavior U6 (s_behavior, co_behavior, a, b, ci, clk);
+    adder_behavior U6 (s_behavior, co_behavior, a, b, ci);
 
-    initial $sdf_annotate("/home/M133040086_HDL/structure_reg/adder_structure_reg.sdf" , U1);
-    initial $sdf_annotate("/home/M133040086_HDL/dataflow_reg/adder_dataflow_reg.sdf" , U2);
-    initial $sdf_annotate("/home/M133040086_HDL/behavior_reg/adder_behavior_reg.sdf" , U3);
-    initial $sdf_annotate("/home/M133040086_HDL/structure/adder_structure.sdf" , U4);
-    initial $sdf_annotate("/home/M133040086_HDL/dataflow/adder_dataflow.sdf" , U5);
-    initial $sdf_annotate("/home/M133040086_HDL/behavior/adder_behavior.sdf" , U6);
+    initial $sdf_annotate("adder_structure_reg.sdf" , U1);
+    initial $sdf_annotate("adder_dataflow_reg.sdf" , U2);
+    initial $sdf_annotate("adder_behavior_reg.sdf" , U3);
+    initial $sdf_annotate("adder_structure.sdf" , U4);
+    initial $sdf_annotate("adder_dataflow.sdf" , U5);
+    initial $sdf_annotate("adder_behavior.sdf" , U6);
 
 
     // Clock generation

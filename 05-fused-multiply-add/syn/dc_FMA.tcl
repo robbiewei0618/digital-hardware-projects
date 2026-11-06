@@ -21,8 +21,8 @@ alias h history
 #Path_Top:Verilog放置的位置
 #Path_Syn:合成後report.txt檔案要放置的根位置，需自行在目錄下創建名為dc_out_file之資料夾
 #Dump_file_name:合成後產生檔案之名字
-set Path_Top		"/MasterClass/M133040086_ALU/HW2/RTL/FLP_FMA_4.v"
-set Path_Syn		"/MasterClass/M133040086_ALU/HW2/gate_level/FLP_FMA_4/Delay/"
+set Path_Top		"../rtl/FLP_FMA_4.v"
+set Path_Syn		"./gate_level/FLP_FMA_4/Delay/"
 set Dump_file_name  "FLP_FMA_4"
 #設定Top module 名稱，需跟自行設計之電路的top module name相同
 set Top				"FLP_FMA_4"
@@ -32,10 +32,10 @@ set Clk_period		"0"
 
 # [ Read Design File ]
 #如果設計有parameter設計，read_file指定不能用，需使用analyze + elaborate指令並自行更改路徑
-# read_file -format verilog {/home/m103040049/HDL_HW/multiplier.v}
+# read_file -format verilog {multiplier.v}
 # current_design $Top
 analyze -format verilog {
-    /MasterClass/M133040086_ALU/HW2/RTL/FLP_FMA_4.v
+    ../rtl/FLP_FMA_4.v
     }
 elaborate $Top
 current_design $Top

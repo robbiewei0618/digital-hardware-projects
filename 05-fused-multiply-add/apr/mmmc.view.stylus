@@ -57,7 +57,7 @@ create_delay_corner -name DC_ss0p72vm40c\
     -rc_corner RC_worst
 
 create_constraint_mode -name CM_func\
-    -sdc_files /home/m133040041/ALU/HW2/FLP_FMA_4/gate_level/SYN/FLP_FMA_4_syn.sdc
+    -sdc_files FLP_FMA_4_syn.sdc
 
 create_analysis_view -name AV_func_ff0p88v125c -constraint_mode CM_func -delay_corner DC_ff0p88v125c
 create_analysis_view -name AV_func_ff0p88vm40c -constraint_mode CM_func -delay_corner DC_ff0p88vm40c

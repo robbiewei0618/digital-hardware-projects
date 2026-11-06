@@ -1,16 +1,16 @@
-// FXP_ADDER / FXP_MUL / FLP_ADDER / FLP_Multiplier / FLP_ADDER_7 / FLP_ADDER_4 / FLP_Multiplier_4
-//`define FLP_adder
-//`define FLP_adder_4
-//`define FLP_adder_7
-`define FLP_Multiplier_4
+// Course (TA) testbench, made portable: select the DUT on the command line,
+// e.g.  iverilog -DFLP_adder ...   (FXP_adder / FXP_mul / FLP_adder /
+// FLP_Multiplier / FLP_adder_7 / FLP_adder_4 / FLP_Multiplier_4).
+// Pipelined DUTs: the TB checks the output (PIPE-2) cycles after the input
+// is applied; override with -DPIPE_OVERRIDE=<n> if a design's depth differs.
 // Standard Delay Format File
 //ALU_HW1_TA_
 
 `timescale 1ns/1ps
 `define CYCLE 5.0
 `define DATA_NUM 100
-`define FILE_A "/MasterClass/M133040086_ALU/HW1/a.txt"
-`define FILE_B "/MasterClass/M133040086_ALU/HW1/b.txt"
+`define FILE_A "ALU_a.txt"
+`define FILE_B "ALU_b.txt"
 `ifdef FXP_adder
     `define FXP
 `elsif FXP_mul
@@ -20,13 +20,25 @@
 `elsif FLP_Multiplier
    `define FLP
 `elsif FLP_adder_7
-    `define PIPE 7
+    `ifdef PIPE_OVERRIDE
+        `define PIPE `PIPE_OVERRIDE
+    `else
+        `define PIPE 7
+    `endif
     `define adder
 `elsif FLP_adder_4
-    `define PIPE 4
+    `ifdef PIPE_OVERRIDE
+        `define PIPE `PIPE_OVERRIDE
+    `else
+        `define PIPE 4
+    `endif
     `define adder
 `elsif FLP_Multiplier_4
-    `define PIPE 4
+    `ifdef PIPE_OVERRIDE
+        `define PIPE `PIPE_OVERRIDE
+    `else
+        `define PIPE 4
+    `endif
     `define mul
 `endif
 
@@ -79,8 +91,8 @@ module testbench();
         file_b      = $fopen(   `FILE_B  , "r");
         for(i=0; i<`DATA_NUM; i=i+1)
         begin
-            garbage = $fscanf(file_a, "%X", data_a[i]);
-            garbage = $fscanf(file_b, "%X", data_b[i]);
+            garbage = $fscanf(file_a, "%h", data_a[i]);
+            garbage = $fscanf(file_b, "%h", data_b[i]);
         end
     end
     
@@ -151,8 +163,8 @@ module testbench();
             begin
                 input_a = data_a[i];
                 input_b = data_b[i];
-                real_a = $bitstoreal({input_a[31], {3'd0, input_a[30:23]}-127+1023, input_a[22:0], 29'd0});
-                real_b = $bitstoreal({input_b[31], {3'd0, input_b[30:23]}-127+1023, input_b[22:0], 29'd0});
+                real_a = $bitstoreal({input_a[31], {3'd0, input_a[30:23]}-11'd127+11'd1023, input_a[22:0], 29'd0});
+                real_b = $bitstoreal({input_b[31], {3'd0, input_b[30:23]}-11'd127+11'd1023, input_b[22:0], 29'd0});
                 `ifdef FLP_adder
                     real_ans = real_a + real_b;
                 `elsif FLP_Multiplier
@@ -160,15 +172,15 @@ module testbench();
                 `endif
                 temp_answer = $realtobits(real_ans);
                 // if(temp_answer[28] && |temp_answer[27:0])
-                //     answer = {temp_answer[63], temp_answer[62:52]-1023+127, temp_answer[51:29]} +1;
+                //     answer = {temp_answer[63], temp_answer[62:52]-11'd1023+11'd127, temp_answer[51:29]} +1;
                 // else if(temp_answer[28] && temp_answer[29])
-                //     answer = {temp_answer[63], temp_answer[62:52]-1023+127, temp_answer[51:29]} +1;
+                //     answer = {temp_answer[63], temp_answer[62:52]-11'd1023+11'd127, temp_answer[51:29]} +1;
                 // else
-                answer = {temp_answer[63], temp_answer[62:52]-1023+127, temp_answer[51:29]};
+                answer = {temp_answer[63], temp_answer[62:52]-11'd1023+11'd127, temp_answer[51:29]};
 
                 if( temp_answer[28] == 1'b1 && (((|temp_answer[27:0]) == 1'b1) || (answer%2==1)) )
                     answer = answer + 1'b1;
-                real_outcome = $bitstoreal({outcome[31], {3'd0, outcome[30:23]}-127+1023, outcome[22:0], 29'd0});
+                real_outcome = $bitstoreal({outcome[31], {3'd0, outcome[30:23]}-11'd127+11'd1023, outcome[22:0], 29'd0});
                 real_error = (real_outcome > real_ans) ? ((real_outcome - real_ans) / real_ans) : ((real_ans - real_outcome) / real_ans);
                 total_error = real_error*(1/(i+1.0)) + total_error*(i/(i+1.0));
                 #(`CYCLE);
@@ -207,16 +219,16 @@ module testbench();
                 begin
                     temp_a = data_a[i+2-`PIPE];
                     temp_b = data_b[i+2-`PIPE];
-                    real_a = $bitstoreal({temp_a[31], {3'd0, temp_a[30:23]}-127+1023, temp_a[22:0], 29'd0});
-                    real_b = $bitstoreal({temp_b[31], {3'd0, temp_b[30:23]}-127+1023, temp_b[22:0], 29'd0});
+                    real_a = $bitstoreal({temp_a[31], {3'd0, temp_a[30:23]}-11'd127+11'd1023, temp_a[22:0], 29'd0});
+                    real_b = $bitstoreal({temp_b[31], {3'd0, temp_b[30:23]}-11'd127+11'd1023, temp_b[22:0], 29'd0});
                     `ifdef adder
                         real_ans = real_a + real_b;
                     `elsif mul
                         real_ans = real_a * real_b;
                     `endif
                     temp_answer = $realtobits(real_ans);
-                    answer = {temp_answer[63], temp_answer[62:52]-1023+127, temp_answer[51:29]};
-                    real_outcome = $bitstoreal({outcome[31], {3'd0, outcome[30:23]}-127+1023, outcome[22:0], 29'd0});
+                    answer = {temp_answer[63], temp_answer[62:52]-11'd1023+11'd127, temp_answer[51:29]};
+                    real_outcome = $bitstoreal({outcome[31], {3'd0, outcome[30:23]}-11'd127+11'd1023, outcome[22:0], 29'd0});
                     real_error = (real_outcome > real_ans) ? ((real_outcome - real_ans) / real_ans) : ((real_ans - real_outcome) / real_ans);
                     total_error = real_error*(1/(i-`PIPE+3.0)) + total_error*((i-`PIPE+2)/(i-`PIPE+3.0));
                     // $display("Your module output: %X\n", outcome);

@@ -21,8 +21,8 @@ alias h history
 #Path_Top:Verilog放置的位置
 #Path_Syn:合成後report.txt檔案要放置的根位置，需自行在目錄下創建名為dc_out_file之資料夾
 #Dump_file_name:合成後產生檔案之名字
-set Path_Top		"/home/M133040086_HDL/rtl/"
-set Path_Syn		"/home/M133040086_HDL/dc_out_file/"
+set Path_Top		"../rtl/"
+set Path_Syn		"./dc_out_file/"
 set Dump_file_name "adder_structure_reg"
 #設定Top module 名稱，需跟自行設計之電路的top module name相同
 set Top				"adder_structure_reg"
@@ -32,13 +32,13 @@ set Clk_period		"10"
 
 # [ Read Design File ]
 #如果設計有parameter設計，read_file指定不能用，需使用analyze + elaborate指令並自行更改路徑
-# read_file -format verilog {/home/m103040049/HDL_HW/multiplier.v}
+# read_file -format verilog {multiplier.v}
 # current_design $Top
 analyze -format verilog {
-        /home/M133040086_HDL/rtl/adder_structure_reg.v
-        /home/M133040086_HDL/rtl/D_FF.v
-        /home/M133040086_HDL/rtl/FullAdder.v
-        /home/M133040086_HDL/rtl/FA.v
+        ../rtl/adder_structure_reg.v
+        ../rtl/D_FF.v
+        ../rtl/RCA_32bit.v
+        ../rtl/FA.v
     }
 elaborate $Top
 current_design $Top

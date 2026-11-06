@@ -10,6 +10,7 @@ to this entry. Error counts are from the default regression
 |---|-----|----------|-----------------------|
 | 1 | `FLP_Multiplier` | scoreboard + `a_exp_sum` (white-box SVA) | 77 149 / 200 493 wrong results (38 %); course TB 43 / 100 |
 | 2 | `FLP_Multiplier`, `FLP_Multiplier_4` | scoreboard (all-ones mantissa operands) | 20 / 200 493 results 1 ULP low; course TB 100 / 100 |
+| 3 | `FXP_mul` | scoreboard + `cp_sat` coverage | saturation never happened: 100 182 / 200 494 overflowing products wrapped around |
 
 ---
 
@@ -64,3 +65,30 @@ register as `r1_shift_sticky`).
 lower bits all zero — about one random product in 2²³. The corpus here hits
 it through mantissa patterns (all ones, single bits) rather than uniform
 random values.
+
+## 3. `FXP_mul`: the saturation logic could never fire
+
+**Symptom.** Every product outside the Q15.16 range wrapped around instead
+of clamping, e.g. `0x7ffffffc * 0x00020000` (≈ 32768 × 2) gave
+`0xfffffff8` instead of `0x7fffffff`.
+
+**Root cause.** The 64-bit product was rounded and then compared with the
+32-bit limits — but it had already been narrowed to 32 bits:
+
+```verilog
+wire signed [WIDTH-1:0] keep    = product_full >>> FRAC;   // top bits dropped here
+...
+wire sat_hi = (rounded > SAT_MAX);  // a 32-bit value is never > the 32-bit max
+```
+
+`sat_hi` / `sat_lo` were constant 0, so synthesis would have removed the
+whole saturation path.
+
+**Fix.** Keep the shifted value at full width, round with one extra bit,
+compare against the sign-extended limits, and only then narrow.
+
+**Coverage note.** This is the textbook case for functional coverage: the
+`cp_sat.sat` bin can only be hit when saturation is *expected*, and a
+scoreboard is needed to notice that the DUT did not saturate. The course
+testbench never exercised overflow (it also checked a different, 64-bit
+interface — see the project README).

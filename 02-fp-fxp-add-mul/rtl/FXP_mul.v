@@ -23,8 +23,9 @@ module FXP_mul #(
   // ------------------------------------------------------------
   // 2. 四捨五入 (Round-to-Nearest, Ties-to-Even)
   // ------------------------------------------------------------
-  // 保留高 WIDTH 位，右移 FRAC 位以回到原比例
-  wire signed [WIDTH-1:0] keep = product_full >>> FRAC;
+  // 右移 FRAC 位回到原比例。保留完整 2*WIDTH 位：若在這裡就截成 WIDTH 位，
+  // 溢位的高位會先被丟掉，後面的飽和判斷永遠不會成立。
+  wire signed [2*WIDTH-1:0] keep = product_full >>> FRAC;
 
   // Guard bit = FRAC-1 位，Sticky = 其餘低位 OR
   wire guard  = (FRAC == 0) ? 1'b0 : product_full[FRAC-1];
@@ -34,22 +35,20 @@ module FXP_mul #(
   // ties-to-even 規則
   wire round_up = guard & (sticky | lsb_keep);
 
-  // 執行加一
-  wire signed [WIDTH:0] keep_ext = {keep[WIDTH-1], keep};
-  wire signed [WIDTH:0] rounded_ext = keep_ext + {{WIDTH{1'b0}}, round_up};
-  wire signed [WIDTH-1:0] rounded = rounded_ext[WIDTH-1:0];
+  // 執行加一（多 1 位，避免 +1 本身溢位）
+  wire signed [2*WIDTH:0] rounded = {keep[2*WIDTH-1], keep} + {{(2*WIDTH){1'b0}}, round_up};
 
   // ------------------------------------------------------------
-  // 3. 飽和處理 (Saturation)
+  // 3. 飽和處理 (Saturation)：在全寬度下比較
   // ------------------------------------------------------------
   localparam signed [WIDTH-1:0] SAT_MAX =  {1'b0, {WIDTH-1{1'b1}}}; // +max
   localparam signed [WIDTH-1:0] SAT_MIN =  {1'b1, {WIDTH-1{1'b0}}}; // -max-1
 
-  wire sat_hi = (rounded > SAT_MAX);
-  wire sat_lo = (rounded < SAT_MIN);
+  wire sat_hi = (rounded > $signed({{(WIDTH+1){1'b0}}, SAT_MAX}));
+  wire sat_lo = (rounded < $signed({{(WIDTH+1){1'b1}}, SAT_MIN}));
 
   assign d = sat_hi ? SAT_MAX :
              sat_lo ? SAT_MIN :
-                      rounded;
+                      rounded[WIDTH-1:0];
 
 endmodule

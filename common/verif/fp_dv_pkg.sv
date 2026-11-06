@@ -174,6 +174,7 @@ package fp_dv_pkg;
 
     function new(string name);
       this.name = name;
+      if ($value$plusargs("MAXPRINT=%d", max_print)) ;   // e.g. +MAXPRINT=1000 for triage
     endfunction
 
     function void check(bit ok, string what);

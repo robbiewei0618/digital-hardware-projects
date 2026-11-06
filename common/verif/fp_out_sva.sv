@@ -4,12 +4,14 @@
 // Instantiated (or bound) once per DUT output. `en` must be low until the
 // pipeline holds valid data. All designs here share one contract:
 //   * the result is never X/Z
-//   * no subnormal results: tiny results are flushed to a signed zero (FTZ)
+//   * no subnormal results: tiny results are flushed to a signed zero
+//     (only for FTZ designs, parameter FTZ=1; the FMA keeps subnormals)
 //   * every NaN result is the canonical quiet NaN 0 | all-ones | 10...0
 // =============================================================================
 module fp_out_sva #(
   parameter int EB = 8,
   parameter int MB = 23,
+  parameter bit FTZ = 1,
   parameter string NAME = "dut"
 ) (
   input logic             clk,
@@ -23,7 +25,7 @@ module fp_out_sva #(
   a_known: assert property (@(posedge clk) en |-> !$isunknown(d))
     else begin $error("[SVA] %s: X/Z on result", NAME); fp_dv_pkg::sva_errors++; end
 
-  a_ftz: assert property (@(posedge clk) en && d[EB+MB-1:MB] == '0 |-> d[MB-1:0] == '0)
+  a_ftz: assert property (@(posedge clk) FTZ && en && d[EB+MB-1:MB] == '0 |-> d[MB-1:0] == '0)
     else begin $error("[SVA] %s: subnormal result %h (FTZ contract)", NAME, d); fp_dv_pkg::sva_errors++; end
 
   a_qnan: assert property (@(posedge clk) en && is_nan |-> d == QNAN)

@@ -243,10 +243,11 @@ module FLP_adder_7 (
   wire [23:0] s6_mant24     = r6_mant_final[26:3];
 
   wire s6_inf_sign = r6_a_is_inf ? r6_sign_a : r6_sign_b;
-  wire s6_both_zero = r6_a_is_zero & r6_b_is_zero;
 
   wire [31:0] s6_res_normal    = { r6_sign, s6_exp_biased, s6_mant24[22:0] };
-  wire [31:0] s6_res_zero      = { r6_sign, 8'd0,          23'd0 };
+  wire s6_both_zero = r6_a_is_zero & r6_b_is_zero;
+  // exact zero: (-0) + (-0) = -0, every other exact zero is +0 (RNE)
+  wire [31:0] s6_res_zero      = { s6_both_zero & r6_sign_a & r6_sign_b, 8'd0, 23'd0 };
   wire [31:0] s6_res_inf       = { s6_inf_sign,8'hFF,      23'd0 };
   wire [31:0] s6_res_overflow  = { r6_sign, 8'hFF,         23'd0 };
   wire [31:0] s6_res_underflow = { r6_sign, 8'd0,          23'd0 };

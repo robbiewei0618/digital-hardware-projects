@@ -14,6 +14,7 @@ to this entry. Error counts are from the default regression
 | 4 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard (directed `x + x`) | every sum that carries out (≥ 2× the larger operand's leading bit) flushed to 0: `1.0 + 1.0 = 0`; 6 728 / 200 493 per adder; course TB 100 / 100 |
 | 5 | `FLP_adder_4`, `FLP_adder_7` | scoreboard (back-to-back Inf operands) | Inf results took the sign of the operand *currently at the input*, not of the one in flight: 3 959 / 200 491 wrong |
 | 6 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard + `x_effsub_round` coverage | effective subtractions with a far-away small operand rounded 1 ULP high: 3 372 / 200 493 per adder |
+| 7 | `FLP_adder`, `FLP_adder_4`, `FLP_adder_7` | scoreboard (directed signed zeros) | `(-0) + (-0)` returned `+0` (IEEE 754 requires `-0`): 49 / 200 493 |
 
 ---
 
@@ -174,3 +175,24 @@ part in the subtraction as a borrow. Applied to all three adders.
 a difference that lands within one alignment-sticky of a half-way point.
 The coverage cross `x_effsub_round` (effective subtraction × rounding
 outcome) is what this stimulus targets.
+
+## 7. Adders: `(-0) + (-0)` returned `+0`
+
+**Symptom / root cause.** The zero result took its sign from the
+significand sum, which is `+0` whenever the sum is zero. IEEE 754 §6.3:
+the sum of two zeros of the same sign keeps that sign; an exact zero from
+`x + (-x)` is `+0` under round-to-nearest.
+
+**Fix.** `res_zero` sign = `both_zero & sign_a & sign_b`.
+
+Minor, but it is the kind of corner a reviewer checks first, and it only
+appears with a directed signed-zero matrix — random patterns never produce
+two zeros.
+
+---
+
+## After the fixes
+
+`make verif` (seed 1): all seven DUTs, 200 494 checks each, 0 mismatches,
+0 assertion failures; `make legacy`: every course testbench passes. See
+the project README for coverage numbers.

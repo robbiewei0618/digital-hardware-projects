@@ -152,10 +152,11 @@ module FLP_adder_4 (
   wire [23:0] mant24     = mant_final[26:3];
 
   wire inf_sign = r1_a_inf ? r1_sign_a : r1_sign_b;
-  wire both_zero = r1_a_zero & r1_b_zero;
 
   wire [31:0] res_normal    = { s2_sign, exp_biased, mant24[22:0] };
-  wire [31:0] res_zero      = { s2_sign, 8'd0, 23'd0 };
+  wire both_zero = r1_a_zero & r1_b_zero;
+  // exact zero: (-0) + (-0) = -0, every other exact zero is +0 (RNE)
+  wire [31:0] res_zero      = { both_zero & r1_sign_a & r1_sign_b, 8'd0, 23'd0 };
   wire [31:0] res_inf       = { inf_sign, 8'hFF, 23'd0 };
   wire [31:0] res_overflow  = { s2_sign, 8'hFF, 23'd0 };
   wire [31:0] res_underflow = { s2_sign, 8'd0, 23'd0 };

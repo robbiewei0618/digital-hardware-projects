@@ -145,13 +145,14 @@ module FLP_adder (
   wire inf_sign = a_is_inf ? sign_a : sign_b;
 
   wire [31:0] res_normal    = { sign_res, exp_biased, mant24[22:0] };
-  wire [31:0] res_zero      = { sign_res, 8'd0,       23'd0 };
+  wire both_zero = a_is_zero & b_is_zero;
+  // exact zero: (-0) + (-0) = -0, every other exact zero is +0 (RNE)
+  wire [31:0] res_zero      = { both_zero & sign_a & sign_b, 8'd0, 23'd0 };
   wire [31:0] res_inf       = { inf_sign, 8'hFF,      23'd0 };
   wire [31:0] res_overflow  = { sign_res, 8'hFF,      23'd0 };
   wire [31:0] res_underflow = { sign_res, 8'd0,       23'd0 };
   wire [31:0] res_nan       = { 1'b0,     8'hFF,      23'h400000 }; // qNaN
 
-  wire both_zero = a_is_zero & b_is_zero;
 
   wire [31:0] res_comb =
       (a_is_nan | b_is_nan | (a_is_inf & b_is_inf & (sign_a ^ sign_b))) ? res_nan :
